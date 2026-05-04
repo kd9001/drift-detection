@@ -142,7 +142,7 @@ resource "aws_cloudwatch_metric_alarm" "sg_drift_alarm" {
   statistic           = "Sum"
   threshold           = 1
   alarm_description   = "Triggered when someone manually changes SG via console"
-  alarm_actions       = [aws_lambda_function.drift_trigger.arn]
+  alarm_actions       = [aws_sns_topic.alarm_trigger.arn]
 }
 
 resource "aws_lambda_function" "drift_trigger" {
@@ -160,6 +160,25 @@ resource "aws_lambda_function" "drift_trigger" {
     }
   }
 }
+
+resource "aws_sns_topic" "alarm_trigger" {
+  name = "drift-alarm-trigger"
+}
+
+resource "aws_sns_topic_subscription" "lambda_trigger" {
+  topic_arn = aws_sns_topic.alarm_trigger.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.drift_trigger.arn
+}
+
+resource "aws_lambda_permission" "allow_sns" {
+  statement_id  = "AllowSNSInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.drift_trigger.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.alarm_trigger.arn
+}
+
 
 resource "aws_lambda_permission" "allow_cloudwatch" {
   statement_id  = "AllowCloudWatchAlarm"
@@ -311,4 +330,30 @@ resource "aws_sns_topic_subscription" "email_alert" {
   topic_arn = aws_sns_topic.drift_alerts.arn
   protocol  = "email"
   endpoint  = "iamfearlessalways@gmail.com"
+}
+
+resource "aws_iam_role_policy_attachment" "codebuild_readonly" {
+  role       = aws_iam_role.codebuild_role.name
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+
+resource "aws_iam_role_policy" "codebuild_sns" {
+  name = "codebuild-sns-publish"
+  role = aws_iam_role.codebuild_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "sns:Publish",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
