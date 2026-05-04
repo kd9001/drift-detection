@@ -266,23 +266,42 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "s3:PutObject",
           "s3:ListBucket",
           "s3:GetBucketPolicy",
-          "ec2:Describe*",
+          "s3:GetBucketAcl",
+          "s3:GetBucketLocation",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSecurityGroupRules",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeInstances",
+          "ec2:DescribeNetworkInterfaces",
           "sns:Publish",
           "sns:GetTopicAttributes",
+          "sns:ListTagsForResource",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
           "logs:DescribeLogGroups",
+          "logs:ListTagsForResource",
+          "logs:ListTagsLogGroup",
           "iam:GetRole",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:GetRolePolicy",
           "cloudwatch:DescribeAlarms",
-          "cloudtrail:GetTrail"
+          "cloudwatch:GetMetricData",
+          "cloudtrail:GetTrail",
+          "cloudtrail:GetTrailStatus",
+          "cloudtrail:ListTags",
+          "lambda:GetFunction",
+          "lambda:GetPolicy",
+          "lambda:ListAliases",
+          "lambda:ListVersionsByFunction"
         ]
         Resource = "*"
       }
     ]
   })
 }
-
 
 resource "aws_sns_topic" "drift_alerts" {
   name = "terraform-drift-alerts"

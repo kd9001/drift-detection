@@ -11,30 +11,27 @@ phases:
   pre_build:
     commands:
       - echo "Initializing Terraform..."
-      - cd infra/
-      - terraform init -input=false
+      - cd $CODEBUILD_SRC_DIR/infra && terraform init -input=false
 
   build:
-    shell: bash
     commands:
       - echo "Running drift detection..."
       - |
-        cd infra/
-        terraform plan -detailed-exitcode -no-color -input=false 2>&1 | tee /tmp/plan_output.txt
-        PLAN_EXIT=${PIPESTATUS[0]}
-
+        #!/bin/bash
+        cd $CODEBUILD_SRC_DIR/infra
+        terraform plan -detailed-exitcode -no-color -input=false > /tmp/plan_output.txt 2>&1
+        PLAN_EXIT=$?
         if [ $PLAN_EXIT -eq 0 ]; then
-          echo "✅ NO DRIFT — Infrastructure matches Terraform state."
-
+          echo "NO DRIFT - Infrastructure matches Terraform state."
         elif [ $PLAN_EXIT -eq 2 ]; then
-          echo "🚨 DRIFT DETECTED — Manual changes found!"
+          echo "DRIFT DETECTED - Manual changes found!"
           aws sns publish \
             --topic-arn $SNS_TOPIC_ARN \
             --subject "Terraform Drift Detected on EC2/SG" \
             --message "$(cat /tmp/plan_output.txt | tail -50)"
           exit 2
-
         else
-          echo "❌ Terraform plan errored out."
+          echo "Terraform plan errored out."
+          cat /tmp/plan_output.txt
           exit 1
         fi
