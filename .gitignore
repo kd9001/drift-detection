@@ -4,6 +4,3 @@
 *.tfstate.backup
 *.tfplan
 .terraform.lock.hcl
-
-# Lambda zip
-lambda/*.zip
