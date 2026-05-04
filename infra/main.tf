@@ -265,11 +265,17 @@ resource "aws_iam_role_policy" "codebuild_policy" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:ListBucket",
+          "s3:GetBucketPolicy",
           "ec2:Describe*",
           "sns:Publish",
+          "sns:GetTopicAttributes",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "iam:GetRole",
+          "cloudwatch:DescribeAlarms",
+          "cloudtrail:GetTrail"
         ]
         Resource = "*"
       }

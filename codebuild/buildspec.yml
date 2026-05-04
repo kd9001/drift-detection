@@ -15,9 +15,11 @@ phases:
       - terraform init -input=false
 
   build:
+    shell: bash
     commands:
       - echo "Running drift detection..."
       - |
+        cd infra/
         terraform plan -detailed-exitcode -no-color -input=false 2>&1 | tee /tmp/plan_output.txt
         PLAN_EXIT=${PIPESTATUS[0]}
 
