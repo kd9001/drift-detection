@@ -1,0 +1,38 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "Installing Terraform..."
+      - curl -Lo terraform.zip https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+      - unzip terraform.zip && mv terraform /usr/local/bin/
+      - terraform version
+
+  pre_build:
+    commands:
+      - echo "Initializing Terraform..."
+      - cd infra/
+      - terraform init -input=false
+
+  build:
+    commands:
+      - echo "Running drift detection..."
+      - |
+        terraform plan -detailed-exitcode -no-color -input=false 2>&1 | tee /tmp/plan_output.txt
+        PLAN_EXIT=${PIPESTATUS[0]}
+
+        if [ $PLAN_EXIT -eq 0 ]; then
+          echo "✅ NO DRIFT — Infrastructure matches Terraform state."
+
+        elif [ $PLAN_EXIT -eq 2 ]; then
+          echo "🚨 DRIFT DETECTED — Manual changes found!"
+          aws sns publish \
+            --topic-arn $SNS_TOPIC_ARN \
+            --subject "Terraform Drift Detected on EC2/SG" \
+            --message "$(cat /tmp/plan_output.txt | tail -50)"
+          exit 2
+
+        else
+          echo "❌ Terraform plan errored out."
+          exit 1
+        fi
