@@ -20,7 +20,7 @@ This project **detects drift in real-time** and alerts the team immediately — 
 ## 🏗️ Architecture
 
 ```
-Developer manually changes infra in AWS Console (e.g. adds a port to Security Group)
+If anyone manually changes infra in AWS Console (e.g. adds a port to Security Group)
         ↓
 CloudTrail captures the API call (AuthorizeSecurityGroupIngress)
         ↓
